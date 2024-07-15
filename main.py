@@ -1,124 +1,94 @@
 import pygame
 import sys
 
-# Инициализация Pygame
 pygame.init()
 
-# Константы
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 600
+
+SCREEN_WIDTH = 1280
+SCREEN_HEIGHT = 1000
 FPS = 60
 GRAVITY = 0.5
 
-# Цвета
+
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 BLUE = (0, 0, 255)
 
-# Создание экрана
+
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Super Mario")
 
-# Игровые объекты
-class Player(pygame.sprite.Sprite):
-    def __init__(self):
-        super().__init__()
-        self.image = pygame.Surface((50, 50))
-        self.image.fill(BLUE)
-        self.rect = self.image.get_rect()
-        self.rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
-        self.speed = 5
-        self.velocity_y = 0
-        self.on_ground = False
+player_image = pygame.image.load("player.png")
+player_image = pygame.transform.scale(player_image, (50, 50))
+platform_image = pygame.image.load("platform.png")
+platform_image = pygame.transform.scale(platform_image, (200, 20))
+background_image = pygame.image.load("background.png")
+background_image = pygame.transform.scale(background_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
 
-    def update(self):
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_LEFT]:
-            self.rect.x -= self.speed
-        if keys[pygame.K_RIGHT]:
-            self.rect.x += self.speed
-        if keys[pygame.K_UP] and self.on_ground:
-            self.velocity_y = -10
-            self.on_ground = False
 
-        # Применение гравитации
-        self.velocity_y += GRAVITY
-        self.rect.y += self.velocity_y
+player_rect = player_image.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
+player_speed = 5
+player_velocity_y = 0
+player_on_ground = False
 
-        # Проверка выхода за границы экрана
-        if self.rect.bottom > SCREEN_HEIGHT:
-            self.rect.bottom = SCREEN_HEIGHT
-            self.velocity_y = 0
-            self.on_ground = True
+platforms = [
+    pygame.Rect(300, 400, 200, 20),
+    pygame.Rect(100, 300, 200, 20),
+    pygame.Rect(500, 500, 200, 20),
+    pygame.Rect(700, 600, 200, 20),
+    pygame.Rect(900, 700, 200, 20)
+]
 
-class Platform(pygame.sprite.Sprite):
-    def __init__(self, x, y, width, height):
-        super().__init__()
-        self.image = pygame.Surface((width, height))
-        self.image.fill(BLACK)
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
+def apply_gravity():
+    global player_velocity_y, player_on_ground
+    player_velocity_y += GRAVITY
+    player_rect.y += player_velocity_y
+    if player_rect.bottom > SCREEN_HEIGHT:
+        player_rect.bottom = SCREEN_HEIGHT
+        player_velocity_y = 0
+        player_on_ground = True
 
-class Level:
-    def __init__(self, player):
-        self.player = player
-        self.platforms = pygame.sprite.Group()
-        self.create_level()
+def check_collisions():
+    global player_velocity_y, player_on_ground
+    for platform in platforms:
+        if player_rect.colliderect(platform):
+            player_rect.bottom = platform.top
+            player_velocity_y = 0
+            player_on_ground = True
 
-    def create_level(self):
-        # Пример платформ
-        platform1 = Platform(300, 500, 200, 20)
-        platform2 = Platform(100, 450, 200, 20)
-        self.platforms.add(platform1, platform2)
+def update_player():
+    global player_on_ground
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT]:
+        player_rect.x -= player_speed
+    if keys[pygame.K_RIGHT]:
+        player_rect.x += player_speed
+    if (keys[pygame.K_UP] or keys[pygame.K_SPACE]) and player_on_ground:
+        player_velocity_y = -10
+        player_on_ground = False
+    apply_gravity()
+    check_collisions()
 
-    def update(self):
-        self.platforms.update()
-        self.check_collisions()
+def draw_platforms():
+    for platform in platforms:
+        screen.blit(platform_image, platform.topleft)
 
-    def check_collisions(self):
-        hits = pygame.sprite.spritecollide(self.player, self.platforms, False)
-        if hits:
-            self.player.rect.bottom = hits[0].rect.top
-            self.player.velocity_y = 0
-            self.player.on_ground = True
-
-    def draw(self, screen):
-        self.platforms.draw(screen)
-
-# Основной игровой цикл
 def main():
     clock = pygame.time.Clock()
-    player = Player()
-    level1 = Level(player)
-    level2 = Level(player)  # Можно создать другой уровень с другими платформами
-    levels = [level1, level2]
-    current_level_index = 0
-    current_level = levels[current_level_index]
-
-    all_sprites = pygame.sprite.Group()
-    all_sprites.add(player)
-
     running = True
+
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
-        # Обновление
-        all_sprites.update()
-        current_level.update()
 
-        # Проверка перехода на следующий уровень
-        if player.rect.x > SCREEN_WIDTH:
-            current_level_index = (current_level_index + 1) % len(levels)
-            current_level = levels[current_level_index]
-            player.rect.x = 0
+        update_player()
 
-        # Рендеринг
-        screen.fill(WHITE)
-        all_sprites.draw(screen)
-        current_level.draw(screen)
+
+        screen.blit(background_image, (0, 0))
+        screen.blit(player_image, player_rect.topleft)
+        draw_platforms()
         pygame.display.flip()
 
         clock.tick(FPS)
