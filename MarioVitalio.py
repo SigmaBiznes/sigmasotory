@@ -5,11 +5,14 @@ import sys
 pygame.init()
 
 # Загрузка и воспроизведение музыки
-pygame.mixer.music.load('background_music.mp3')
+background_music = 'background_music.mp3'
+pygame.mixer.music.load(background_music)
 pygame.mixer.music.play(-1)  # -1 означает, что музыка будет играть бесконечно
 
-# Загрузка звука прыжка
+# Загрузка звука прыжка, музыки поражения и звука клика
 jump_sound = pygame.mixer.Sound('jump.mp3')
+lose_music = 'lose.mp3'
+click_sound = pygame.mixer.Sound('click.mp3')
 
 # Константы
 SCREEN_WIDTH = 1280
@@ -40,7 +43,7 @@ player_image_left = pygame.transform.scale(player_image_left, (PLAYER_SIZE, PLAY
 enemy_image_right = pygame.transform.scale(enemy_image_right, (ENEMY_SIZE, ENEMY_SIZE))
 enemy_image_left = pygame.transform.scale(enemy_image_left, (ENEMY_SIZE, ENEMY_SIZE))
 background_image = pygame.transform.scale(background_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
-platform_image = pygame.transform.scale(platform_image, (SCREEN_WIDTH, 50))
+platform_image = pygame.transform.scale(platform_image, (SCREEN_WIDTH, 200))
 
 # Создание окна
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -87,6 +90,9 @@ platforms.append(platform)
 
 # Камера
 camera = pygame.Rect(0, 0, 3000, 2000)  # Размер игрового мира
+
+# Переменная для отслеживания состояния паузы
+paused = False
 
 def update_player(keys, platforms):
     global enemies
@@ -168,7 +174,10 @@ def draw_text(surface, text, size, x, y):
     surface.blit(text_surface, text_rect)
 
 def main_menu():
+    pygame.mixer.music.load(background_music)
+    pygame.mixer.music.play(-1)  # -1 означает, что музыка будет играть бесконечно
     menu = True
+    volume = 1.0  # Начальная громкость
     while menu:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -176,18 +185,29 @@ def main_menu():
                 sys.exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
+                    click_sound.play()  # Воспроизведение звука клика
                     menu = False
                 if event.key == pygame.K_q:
+                    click_sound.play()  # Воспроизведение звука клика
                     pygame.quit()
                     sys.exit()
+                if event.key == pygame.K_UP:
+                    volume = min(1.0, volume + 0.1)  # Увеличение громкости
+                    pygame.mixer.music.set_volume(volume)
+                if event.key == pygame.K_DOWN:
+                    volume = max(0.0, volume - 0.1)  # Уменьшение громкости
+                    pygame.mixer.music.set_volume(volume)
 
         screen.fill(BLACK)
         draw_text(screen, "Супер Виталя", 64, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 4)
         draw_text(screen, "Начать игру(Enter)", 32, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
         draw_text(screen, "Выйти из игры(Q)", 32, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50)
+        draw_text(screen, f"Громкость: {int(volume * 100)}%", 32, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 100)
         pygame.display.flip()
 
 def game_over_menu():
+    pygame.mixer.music.load(lose_music)
+    pygame.mixer.music.play(1)  # -1 означает, что музыка будет играть бесконечно
     menu = True
     while menu:
         for event in pygame.event.get():
@@ -197,6 +217,7 @@ def game_over_menu():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
                     menu = False
+                    pygame.mixer.music.stop()  # Остановка музыки поражения
                     main_menu()
                 if event.key == pygame.K_q:
                     pygame.quit()
