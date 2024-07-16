@@ -4,6 +4,13 @@ import sys
 # Инициализация Pygame
 pygame.init()
 
+# Загрузка и воспроизведение музыки
+pygame.mixer.music.load('background_music.mp3')
+pygame.mixer.music.play(-1)  # -1 означает, что музыка будет играть бесконечно
+
+# Загрузка звука прыжка
+jump_sound = pygame.mixer.Sound('jump.mp3')
+
 # Константы
 SCREEN_WIDTH = 1280
 SCREEN_HEIGHT = 720
@@ -11,7 +18,7 @@ PLAYER_SIZE = 100
 ENEMY_SIZE = 100
 FPS = 60
 GRAVITY = 0.5
-PLAYER_HEALTH = 100
+PLAYER_HEALTH = 300
 
 # Цвета
 WHITE = (255, 255, 255)
@@ -25,6 +32,7 @@ player_image_left = pygame.image.load('playerleft.png')
 enemy_image_right = pygame.image.load('enemyright.png')
 enemy_image_left = pygame.image.load('enemyleft.png')
 background_image = pygame.image.load('background.png')
+platform_image = pygame.image.load('platform.png')
 
 # Изменение размера текстур
 player_image_right = pygame.transform.scale(player_image_right, (PLAYER_SIZE, PLAYER_SIZE))
@@ -32,6 +40,7 @@ player_image_left = pygame.transform.scale(player_image_left, (PLAYER_SIZE, PLAY
 enemy_image_right = pygame.transform.scale(enemy_image_right, (ENEMY_SIZE, ENEMY_SIZE))
 enemy_image_left = pygame.transform.scale(enemy_image_left, (ENEMY_SIZE, ENEMY_SIZE))
 background_image = pygame.transform.scale(background_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
+platform_image = pygame.transform.scale(platform_image, (SCREEN_WIDTH, 50))
 
 # Создание окна
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -71,7 +80,8 @@ enemies = create_enemies()
 # Платформы
 platforms = []
 platform = {
-    'rect': pygame.Rect(0, SCREEN_HEIGHT - 50, SCREEN_WIDTH, 50)
+    'image': platform_image,
+    'rect': platform_image.get_rect(topleft=(0, SCREEN_HEIGHT - 50))
 }
 platforms.append(platform)
 
@@ -100,6 +110,7 @@ def update_player(keys, platforms):
 
     if keys[pygame.K_UP] and player['on_ground']:
         player['vel_y'] = -10
+        jump_sound.play()  # Воспроизведение звука прыжка
 
     for enemy in enemies:
         if player['rect'].colliderect(enemy['rect']):
@@ -216,7 +227,7 @@ while running:
     for enemy in enemies:
         screen.blit(enemy['image'], enemy['rect'].move(camera.topleft))
     for platform in platforms:
-        pygame.draw.rect(screen, BLACK, platform['rect'].move(camera.topleft))
+        screen.blit(platform['image'], platform['rect'].move(camera.topleft))
 
     # Отображение полоски жизни
     pygame.draw.rect(screen, RED, (10, 10, PLAYER_HEALTH * 2, 20))
@@ -233,4 +244,3 @@ while running:
     clock.tick(FPS)
 
 pygame.quit()
-sys.exit()
