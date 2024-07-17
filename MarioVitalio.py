@@ -102,11 +102,15 @@ platforms.append(platform2)
 
 platform3 = {
     'image': platform_image,
-    'rect': platform_image.get_rect(topleft=(2000, 150))
-
-
+    'rect': platform_image.get_rect(topleft=(3000, SCREEN_HEIGHT - 50))
 }
 platforms.append(platform3)
+
+platform4 = {
+    'image': platform_image,
+    'rect': platform_image.get_rect(topleft=(3500, SCREEN_HEIGHT - 50))
+}
+platforms.append(platform4)
 
 # Объект tube
 tube = {
@@ -244,8 +248,7 @@ def main_menu():
 
 
 def pause_menu():
-    pygame.mixer.music.load(background_music)
-    pygame.mixer.music.play(1)  # -1 означает, что музыка будет играть бесконечно
+    pygame.mixer.music.stop()
     menu = True
     pause_image = pygame.image.load('pause_image.jpg')
     pause_image = pygame.transform.scale(pause_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -254,11 +257,12 @@ def pause_menu():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
                     menu = False
-                    pygame.mixer.music.stop()  # Остановка музыки поражения
-                    main_menu()
+                    pygame.mixer.music.load(background_music)
+                    pygame.mixer.music.play(-1)
                 if event.key == pygame.K_q:
                     pygame.quit()
                     sys.exit()
@@ -270,9 +274,8 @@ def pause_menu():
                     pygame.mixer.music.set_volume(volume)
 
         screen.blit(pause_image, (0, 0))
-        draw_text(screen, "Вернуться в главное меню(ENTER)", 32, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
+        draw_text(screen, "Вернуться в игру(ENTER)", 32, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
         draw_text(screen, "Выйти(Q)", 32, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50)
-        draw_text(screen, f"Громкость: {int(volume * 100)}%", 32, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 100)
         pygame.display.flip()
 
 
@@ -333,9 +336,9 @@ while running:
         player['rect'].x = SCREEN_WIDTH // 2
         player['rect'].y = SCREEN_HEIGHT // 2
         enemies = create_enemies()
-    
 
-
+    if keys[pygame.K_ESCAPE]:
+        pause_menu()
 
     pygame.display.flip()
     clock.tick(FPS)
