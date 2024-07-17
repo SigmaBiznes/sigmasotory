@@ -12,6 +12,7 @@ pygame.mixer.music.play(-1)  # -1 означает, что музыка буде
 jump_sound = pygame.mixer.Sound('jump.mp3')
 lose_music = 'lose.mp3'
 click_sound = pygame.mixer.Sound('click.mp3')
+kill_sound = pygame.mixer.Sound('kill_sound.mp3')
 
 
 SCREEN_WIDTH = 1280
@@ -148,8 +149,14 @@ def update_player(keys, platforms):
             if player['vel_y'] > 0:
                 enemies.remove(enemy)
                 player['vel_y'] = -10
+                kill_sound.play()
+
             else:
                 player['health'] -= 1
+
+
+
+
 
     # Проверка падения с платформы
     if player['rect'].top > SCREEN_HEIGHT:
@@ -201,6 +208,7 @@ def draw_text(surface, text, size, x, y):
     text_rect.midtop = (x, y)
     surface.blit(text_surface, text_rect)
 
+
 def main_menu():
     pygame.mixer.music.load(background_music)
     pygame.mixer.music.play(-1)  # -1 означает, что музыка будет играть бесконечно
@@ -233,6 +241,41 @@ def main_menu():
         draw_text(screen, "Выйти из игры(Q)", 32, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50)
         draw_text(screen, f"Громкость: {int(volume * 100)}%", 32, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 100)
         pygame.display.flip()
+
+
+def pause_menu():
+    pygame.mixer.music.load(background_music)
+    pygame.mixer.music.play(1)  # -1 означает, что музыка будет играть бесконечно
+    menu = True
+    pause_image = pygame.image.load('pause_image.jpg')
+    pause_image = pygame.transform.scale(pause_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
+    while menu:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    menu = False
+                    pygame.mixer.music.stop()  # Остановка музыки поражения
+                    main_menu()
+                if event.key == pygame.K_q:
+                    pygame.quit()
+                    sys.exit()
+                if event.key == pygame.K_UP:
+                    volume = min(1.0, volume + 0.1)  # Увеличение громкости
+                    pygame.mixer.music.set_volume(volume)
+                if event.key == pygame.K_DOWN:
+                    volume = max(0.0, volume - 0.1)  # Уменьшение громкости
+                    pygame.mixer.music.set_volume(volume)
+
+        screen.blit(pause_image, (0, 0))
+        draw_text(screen, "Вернуться в главное меню(ENTER)", 32, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
+        draw_text(screen, "Выйти(Q)", 32, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50)
+        draw_text(screen, f"Громкость: {int(volume * 100)}%", 32, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 100)
+        pygame.display.flip()
+
+
 
 def game_over_menu():
     pygame.mixer.music.load(lose_music)
@@ -290,6 +333,9 @@ while running:
         player['rect'].x = SCREEN_WIDTH // 2
         player['rect'].y = SCREEN_HEIGHT // 2
         enemies = create_enemies()
+    
+
+
 
     pygame.display.flip()
     clock.tick(FPS)
