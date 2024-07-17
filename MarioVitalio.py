@@ -1,29 +1,28 @@
 import pygame
 import sys
 
-# Инициализация Pygame
 pygame.init()
 
-# Загрузка и воспроизведение музыки
+
 background_music = 'background_music.mp3'
 pygame.mixer.music.load(background_music)
 pygame.mixer.music.play(-1)  # -1 означает, что музыка будет играть бесконечно
 
-# Загрузка звука прыжка, музыки поражения и звука клика
+
 jump_sound = pygame.mixer.Sound('jump.mp3')
 lose_music = 'lose.mp3'
 click_sound = pygame.mixer.Sound('click.mp3')
 
-# Константы
+
 SCREEN_WIDTH = 1280
 SCREEN_HEIGHT = 720
 PLAYER_SIZE = 100
 ENEMY_SIZE = 100
-FPS = 60
+FPS = 120
 GRAVITY = 0.5
-PLAYER_HEALTH = 300
+PLAYER_HEALTH = 100
 
-# Цвета
+
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
@@ -36,14 +35,18 @@ enemy_image_right = pygame.image.load('enemyright.png')
 enemy_image_left = pygame.image.load('enemyleft.png')
 background_image = pygame.image.load('background.png')
 platform_image = pygame.image.load('platform.png')
+midplatform_image = pygame.image.load('midplatform.png')
+miniplatform_image = pygame.image.load('miniplatform.png')
+tube_image = pygame.image.load('tube.png')
 
 # Изменение размера текстур
-player_image_right = pygame.transform.scale(player_image_right, (PLAYER_SIZE, PLAYER_SIZE))
-player_image_left = pygame.transform.scale(player_image_left, (PLAYER_SIZE, PLAYER_SIZE))
+player_image_right = pygame.transform.scale(player_image_right, (PLAYER_SIZE, 150))
+player_image_left = pygame.transform.scale(player_image_left, (PLAYER_SIZE, 150))
 enemy_image_right = pygame.transform.scale(enemy_image_right, (ENEMY_SIZE, ENEMY_SIZE))
 enemy_image_left = pygame.transform.scale(enemy_image_left, (ENEMY_SIZE, ENEMY_SIZE))
 background_image = pygame.transform.scale(background_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
-platform_image = pygame.transform.scale(platform_image, (SCREEN_WIDTH, 200))
+platform_image = pygame.transform.scale(platform_image, (SCREEN_WIDTH, 100))
+tube_image = pygame.transform.scale(tube_image, (100, 200))
 
 # Создание окна
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -88,8 +91,30 @@ platform = {
 }
 platforms.append(platform)
 
+platform2 = {
+    'image': platform_image,
+    'rect': platform_image.get_rect(topleft=(1400, 470))
+
+}
+platforms.append(platform2)
+
+
+platform3 = {
+    'image': platform_image,
+    'rect': platform_image.get_rect(topleft=(2000, 150))
+
+
+}
+platforms.append(platform3)
+
+# Объект tube
+tube = {
+    'image': tube_image,
+    'rect': tube_image.get_rect(topleft=(SCREEN_WIDTH - 150, SCREEN_HEIGHT - 250))
+}
+
 # Камера
-camera = pygame.Rect(0, 0, 3000, 2000)  # Размер игрового мира
+camera = pygame.Rect(0, 0, 10000, 5000)  # Размер игрового мира
 
 # Переменная для отслеживания состояния паузы
 paused = False
@@ -134,6 +159,9 @@ def update_player(keys, platforms):
         player['rect'].y = SCREEN_HEIGHT // 2
         enemies = create_enemies()
 
+    # Проверка касания объекта tube
+
+
 def update_enemies(platforms):
     for enemy in enemies:
         enemy['vel_y'] += GRAVITY
@@ -146,7 +174,7 @@ def update_enemies(platforms):
                     enemy['rect'].bottom = platform['rect'].top
                     enemy['vel_y'] = 0
 
-        # Изменение направления движения при столкновении с краем экрана
+
         if enemy['rect'].left <= 0 or enemy['rect'].right >= SCREEN_WIDTH:
             enemy['direction'] *= -1
             if enemy['direction'] == 1:
@@ -178,6 +206,8 @@ def main_menu():
     pygame.mixer.music.play(-1)  # -1 означает, что музыка будет играть бесконечно
     menu = True
     volume = 1.0  # Начальная громкость
+    main_image = pygame.image.load('main_image.jpg')
+    main_image = pygame.transform.scale(main_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
     while menu:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -198,8 +228,7 @@ def main_menu():
                     volume = max(0.0, volume - 0.1)  # Уменьшение громкости
                     pygame.mixer.music.set_volume(volume)
 
-        screen.fill(BLACK)
-        draw_text(screen, "Супер Виталя", 64, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 4)
+        screen.blit(main_image, (0, 0))
         draw_text(screen, "Начать игру(Enter)", 32, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
         draw_text(screen, "Выйти из игры(Q)", 32, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50)
         draw_text(screen, f"Громкость: {int(volume * 100)}%", 32, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 100)
@@ -209,6 +238,8 @@ def game_over_menu():
     pygame.mixer.music.load(lose_music)
     pygame.mixer.music.play(1)  # -1 означает, что музыка будет играть бесконечно
     menu = True
+    lose_image = pygame.image.load('lose_image.jpg')
+    lose_image = pygame.transform.scale(lose_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
     while menu:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -223,8 +254,7 @@ def game_over_menu():
                     pygame.quit()
                     sys.exit()
 
-        screen.fill(BLACK)
-        draw_text(screen, "Виталя закончился", 64, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 4)
+        screen.blit(lose_image, (0, 0))
         draw_text(screen, "Вернуться в главное меню(ENTER)", 32, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
         draw_text(screen, "Выйти(Q)", 32, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50)
         pygame.display.flip()
