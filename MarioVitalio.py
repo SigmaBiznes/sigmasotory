@@ -26,7 +26,7 @@ PLAYER_SIZE = 100
 ENEMY_SIZE = 100
 FPS = 120
 GRAVITY = 0.5
-PLAYER_HEALTH = 100
+PLAYER_HEALTH = 75
 
 font = pygame.font.SysFont('Impact', 74)
 
@@ -53,8 +53,8 @@ tube_image = pygame.transform.scale(tube_image, (200, 200))
 tube_image = pygame.transform.rotate(tube_image, 180)
 
 tube = {
-    'rect': pygame.Rect(1000, 200, 50, 200),  # Adjusted position and size
-    'image': tube_image  # Assuming you have an image loaded for tube
+    'rect': pygame.Rect(5000, 550, 50, 200),  # Позиция и размеры
+    'image': tube_image  # Изображение
 }
 
 
@@ -89,7 +89,7 @@ player['rect'].y = SCREEN_HEIGHT // 2
 # Функция для создания врагов
 def create_enemies():
     enemies = []
-    for i in range(5):
+    for i in range(20):  # Измените количество врагов на желаемое значение (например, 20)
         enemy = {
             'image': enemy_image_right,
             'rect': enemy_image_right.get_rect(),
@@ -97,7 +97,7 @@ def create_enemies():
             'speed': 2,
             'direction': 1
         }
-        enemy['rect'].x = i * 300 + 100
+        enemy['rect'].x = i * 800 + 150  # Измените расположение врагов по x для равномерного размещения на экране
         enemy['rect'].y = SCREEN_HEIGHT // 2
         enemies.append(enemy)
     return enemies
@@ -115,7 +115,7 @@ platforms.append(platform)
 
 platform2 = {
     'image': platform_image,
-    'rect': platform_image.get_rect(topleft=(1400, 470))
+    'rect': platform_image.get_rect(topleft=(1400, 500))
 
 }
 platforms.append(platform2)
@@ -129,9 +129,15 @@ platforms.append(platform3)
 
 platform4 = {
     'image': platform_image,
-    'rect': platform_image.get_rect(topleft=(3500, SCREEN_HEIGHT - 50))
+    'rect': platform_image.get_rect(topleft=(4000, SCREEN_HEIGHT - 50))
 }
 platforms.append(platform4)
+
+platform5 = {
+    'image': platform_image,
+    'rect': platform_image.get_rect(topleft=(2700, SCREEN_HEIGHT - 450))
+}
+platforms.append(platform5)
 
 
 
@@ -221,6 +227,7 @@ def win_menu():
         screen.blit(win_image, (0, 0))
         draw_text(screen, "Нажмите ENTER для возврата в меню", 32, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
         draw_text(screen, "Выйти(Q)", 32, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50)
+        draw_text(screen, f"Счёт: {scoreforresult}", 32, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 100)
 
 
         pygame.display.flip()
@@ -368,7 +375,7 @@ def game_over_menu():
 
 
 # Основной игровой цикл
-# Основной игровой цикл
+
 clock = pygame.time.Clock()
 running = True
 main_menu()
@@ -399,7 +406,8 @@ while running:
     pygame.draw.rect(screen, GREEN, (10, 10, player['health'] * 2, 20))
 
     # Отображение счета
-    draw_text(screen, f"Счёт: {score - 1}", 32, SCREEN_WIDTH // 2, 10)
+    scoreforresult = score
+    draw_text(screen, f"Счёт: {score}", 32, SCREEN_WIDTH // 2, 10)
 
     if player['health'] <= 0:
         game_over_menu()
