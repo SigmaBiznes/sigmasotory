@@ -2,17 +2,22 @@ import pygame
 import sys
 
 pygame.init()
+score = 0
 
 
 background_music = 'background_music.mp3'
 pygame.mixer.music.load(background_music)
 pygame.mixer.music.play(-1)  # -1 означает, что музыка будет играть бесконечно
 
+win_music = "win.mp3"
+
 
 jump_sound = pygame.mixer.Sound('jump.mp3')
 lose_music = 'lose.mp3'
 click_sound = pygame.mixer.Sound('click.mp3')
 kill_sound = pygame.mixer.Sound('kill_sound.mp3')
+
+
 
 
 SCREEN_WIDTH = 1280
@@ -23,6 +28,7 @@ FPS = 120
 GRAVITY = 0.5
 PLAYER_HEALTH = 100
 
+font = pygame.font.SysFont('Impact', 74)
 
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
@@ -38,7 +44,20 @@ background_image = pygame.image.load('background.png')
 platform_image = pygame.image.load('platform.png')
 midplatform_image = pygame.image.load('midplatform.png')
 miniplatform_image = pygame.image.load('miniplatform.png')
+
+# Load and scale tube image
 tube_image = pygame.image.load('tube.png')
+tube_image = pygame.transform.scale(tube_image, (200, 200))
+
+# Rotate tube image by 180 degrees
+tube_image = pygame.transform.rotate(tube_image, 180)
+
+tube = {
+    'rect': pygame.Rect(1000, 200, 50, 200),  # Adjusted position and size
+    'image': tube_image  # Assuming you have an image loaded for tube
+}
+
+
 
 # Изменение размера текстур
 player_image_right = pygame.transform.scale(player_image_right, (PLAYER_SIZE, 150))
@@ -47,7 +66,9 @@ enemy_image_right = pygame.transform.scale(enemy_image_right, (ENEMY_SIZE, ENEMY
 enemy_image_left = pygame.transform.scale(enemy_image_left, (ENEMY_SIZE, ENEMY_SIZE))
 background_image = pygame.transform.scale(background_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
 platform_image = pygame.transform.scale(platform_image, (SCREEN_WIDTH, 100))
-tube_image = pygame.transform.scale(tube_image, (100, 200))
+tube_image = pygame.transform.scale(tube_image, (200, 200))
+
+
 
 # Создание окна
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -112,11 +133,7 @@ platform4 = {
 }
 platforms.append(platform4)
 
-# Объект tube
-tube = {
-    'image': tube_image,
-    'rect': tube_image.get_rect(topleft=(SCREEN_WIDTH - 150, SCREEN_HEIGHT - 250))
-}
+
 
 # Камера
 camera = pygame.Rect(0, 0, 10000, 5000)  # Размер игрового мира
@@ -125,7 +142,8 @@ camera = pygame.Rect(0, 0, 10000, 5000)  # Размер игрового мир�
 paused = False
 
 def update_player(keys, platforms):
-    global enemies
+    global enemies, score
+
     player['vel_y'] += GRAVITY
     player['rect'].y += player['vel_y']
 
@@ -146,7 +164,11 @@ def update_player(keys, platforms):
 
     if keys[pygame.K_UP] and player['on_ground']:
         player['vel_y'] = -10
-        jump_sound.play()  # Воспроизведение звука прыжка
+        jump_sound.play()
+
+    # Проверка столкновения с трубой
+    if player['rect'].colliderect(tube['rect']):
+        win_menu()
 
     for enemy in enemies:
         if player['rect'].colliderect(enemy['rect']):
@@ -154,23 +176,57 @@ def update_player(keys, platforms):
                 enemies.remove(enemy)
                 player['vel_y'] = -10
                 kill_sound.play()
-
+                score += 1
             else:
                 player['health'] -= 1
 
-
-
-
-
-    # Проверка падения с платформы
+    # Проверка, упал ли игрок с платформы
     if player['rect'].top > SCREEN_HEIGHT:
         game_over_menu()
         player['health'] = PLAYER_HEALTH
         player['rect'].x = SCREEN_WIDTH // 2
         player['rect'].y = SCREEN_HEIGHT // 2
         enemies = create_enemies()
+        score = 0
 
-    # Проверка касания объекта tube
+
+def win_menu():
+    global enemies, score
+    pygame.mixer.music.load(win_music)
+    pygame.mixer.music.play(-1)
+    menu = True
+    win_image = pygame.image.load('win_image.jpg')
+    win_image = pygame.transform.scale(win_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
+    player['rect'].x = SCREEN_WIDTH // 2
+    player['rect'].y = SCREEN_HEIGHT // 2
+    enemies = create_enemies()
+    score = 0
+    player['health'] = 100
+
+    while menu:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    menu = False
+                    pygame.mixer.music.load(background_music)
+                    pygame.mixer.music.play(-1)
+                    main_menu()
+                if event.key == pygame.K_q:
+                    pygame.quit()
+                    sys.exit()
+
+        screen.blit(win_image, (0, 0))
+        draw_text(screen, "Нажмите ENTER для возврата в меню", 32, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
+        draw_text(screen, "Выйти(Q)", 32, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50)
+
+
+        pygame.display.flip()
+
+if player['rect'].colliderect(tube['rect']):
+    win_menu()
 
 
 def update_enemies(platforms):
@@ -196,6 +252,8 @@ def update_enemies(platforms):
 def update_camera(target):
     x = -target['rect'].x + int(SCREEN_WIDTH / 2)
     y = -target['rect'].y + int(SCREEN_HEIGHT / 2)
+
+
 
     # Ограничение движения камеры
     x = min(0, x)  # Левый край
@@ -250,6 +308,7 @@ def main_menu():
 def pause_menu():
     pygame.mixer.music.stop()
     menu = True
+    volume = 1.0
     pause_image = pygame.image.load('pause_image.jpg')
     pause_image = pygame.transform.scale(pause_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
     while menu:
@@ -276,6 +335,7 @@ def pause_menu():
         screen.blit(pause_image, (0, 0))
         draw_text(screen, "Вернуться в игру(ENTER)", 32, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
         draw_text(screen, "Выйти(Q)", 32, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50)
+        draw_text(screen, f"Громкость: {int(volume * 100)}%", 32, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 100)
         pygame.display.flip()
 
 
@@ -305,6 +365,9 @@ def game_over_menu():
         draw_text(screen, "Выйти(Q)", 32, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50)
         pygame.display.flip()
 
+
+
+# Основной игровой цикл
 # Основной игровой цикл
 clock = pygame.time.Clock()
 running = True
@@ -319,7 +382,12 @@ while running:
     update_enemies(platforms)
     update_camera(player)
 
-    screen.blit(background_image, (0, 0))
+    screen.blit(background_image, (0, 0))  # Отрисовка фона
+
+    # Отрисовка трубы
+    screen.blit(tube['image'], tube['rect'].move(camera.topleft))
+
+    # Отрисовка игрока и врагов
     screen.blit(player['image'], player['rect'].move(camera.topleft))
     for enemy in enemies:
         screen.blit(enemy['image'], enemy['rect'].move(camera.topleft))
@@ -330,12 +398,16 @@ while running:
     pygame.draw.rect(screen, RED, (10, 10, PLAYER_HEALTH * 2, 20))
     pygame.draw.rect(screen, GREEN, (10, 10, player['health'] * 2, 20))
 
+    # Отображение счета
+    draw_text(screen, f"Счёт: {score - 1}", 32, SCREEN_WIDTH // 2, 10)
+
     if player['health'] <= 0:
         game_over_menu()
         player['health'] = PLAYER_HEALTH
         player['rect'].x = SCREEN_WIDTH // 2
         player['rect'].y = SCREEN_HEIGHT // 2
         enemies = create_enemies()
+        score = 0  # Сброс счета при проигрыше
 
     if keys[pygame.K_ESCAPE]:
         pause_menu()
